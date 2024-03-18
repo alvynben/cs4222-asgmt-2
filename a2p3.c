@@ -54,6 +54,7 @@ static struct rtimer timer_rtimer;
 static int counter_rtimer;
 static int prev_light_reading = 0;
 static bool buzzer_timer_active = false;
+static bool not_first_round = false;
 static rtimer_clock_t start_time;
 
 static rtimer_clock_t timeout_rtimer = RTIMER_SECOND / 4;
@@ -103,6 +104,10 @@ void do_rtimer_timeout(struct rtimer *timer, void *ptr)
   {
     if (RTIMER_NOW() > start_time + four_second_rtimer)
     {
+    if (!not_first_round)
+    {
+      not_first_round = true;
+    }
       state = _BUZZ;
       buzzer_timer_active = false;
     }
@@ -144,13 +149,15 @@ get_light_reading()
       {
         state = _BUZZ;
       }
-      else if (state == _WAIT || state == _BUZZ)
+      else if (not_first_round && (state == _WAIT || state == _BUZZ))
       {
+        not_first_round = false;
         state = _PRE_IDLE;
         buzzer_timer_active = false;
         buzzer_stop();
       }
     }
+
     prev_light_reading = value;
   }
   else
